@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Your Swimbot | Synthetic Divergence</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+        
+        .bot-id {
+            font-family: 'Courier New', monospace;
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 5px solid #28a745;
+        }
+        
+        .status-card.dead {
+            border-left-color: #dc3545;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .stat-item {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        .traits-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .trait-bar {
+            margin: 1rem 0;
+        }
+        
+        .trait-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .trait-progress {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+        }
+        
+        .trait-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        
+        .offspring-list {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .offspring-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .offspring-item:last-child {
+            border-bottom: none;
+        }
+        
+        .offspring-id {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+        }
+        
+        .offspring-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .offspring-status.alive {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .offspring-status.dead {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .back-link {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            margin: 0 1rem;
+        }
+        
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐟 Your Swimbot</h1>
+            <div class="bot-id" id="botId">Loading...</div>
+        </div>
+        
+        <div class="content">
+            <div id="loading" class="loading">
+                Loading bot information...
+            </div>
+            
+            <div id="error" class="error" style="display: none;">
+                Bot not found or error loading data.
+            </div>
+            
+            <div id="botData" style="display: none;">
+                <div class="status-card" id="statusCard">
+                    <h3>Status: <span id="status">Unknown</span></h3>
+                    <p id="statusDetails">Loading...</p>
+                </div>
+                
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <span class="stat-value" id="age">-</span>
+                        <div class="stat-label">Age (frames)</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="energy">-</span>
+                        <div class="stat-label">Energy</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="offspring">0</span>
+                        <div class="stat-label">Offspring</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="state">-</span>
+                        <div class="stat-label">Current Behavior</div>
+                    </div>
+                </div>
+                
+                <div class="traits-section">
+                    <h3>🧬 Personality Traits (OCEAN)</h3>
+                    <div id="traits">
+                        <!-- Traits will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div>
+                    <h3>👶 Family Tree</h3>
+                    <div class="offspring-list" id="offspringList">
+                        <div class="offspring-item">
+                            <span>No offspring yet</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="back-link">
+            <a href="/">← Back to Simulation</a>
+            <a href="/dashboard">📊 View Dashboard</a>
+            <a href="/register">🆕 Create Another Bot</a>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const botId = window.location.pathname.split('/').pop();
+        const socket = io();
+        let botData = null;
+        
+        // Set bot ID in header
+        document.getElementById('botId').textContent = botId;
+        
+        // Load initial bot data
+        loadBotData();
+        
+        // Subscribe to real-time updates
+        socket.emit('track-bot', botId);
+        socket.on('bot-update', handleBotUpdate);
+        socket.on('bot-offspring', handleOffspring);
+        
+        async function loadBotData() {
+            try {
+                const response = await fetch(`/api/bot/${botId}`);
+                if (!response.ok) {
+                    throw new Error('Bot not found');
+                }
+                
+                botData = await response.json();
+                displayBotData(botData);
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('botData').style.display = 'block';
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+        
+        function displayBotData(data) {
+            // Status
+            const statusCard = document.getElementById('statusCard');
+            const status = document.getElementById('status');
+            const statusDetails = document.getElementById('statusDetails');
+            
+            if (data.isAlive) {
+                status.textContent = 'Alive 🐟';
+                statusDetails.textContent = 'Your bot is swimming in the digital ocean!';
+                statusCard.classList.remove('dead');
+            } else {
+                status.textContent = data.death_cause ? `Dead (${data.death_cause})` : 'Dead';
+                statusDetails.textContent = data.death_time ? 
+                    `Died on ${new Date(data.death_time).toLocaleString()}` : 
+                    'This bot is no longer in the simulation';
+                statusCard.classList.add('dead');
+            }
+            
+            // Stats
+            if (data.currentState) {
+                document.getElementById('age').textContent = Math.floor(data.currentState.age || 0);
+                document.getElementById('energy').textContent = 
+                    `${Math.floor(data.currentState.energy || 0)}%`;
+                document.getElementById('state').textContent = data.currentState.state || 'Unknown';
+            }
+            
+            document.getElementById('offspring').textContent = data.offspring_count || 0;
+            
+            // Traits
+            if (data.genes) {
+                displayTraits(data.genes);
+            }
+            
+            // Offspring
+            if (data.offspring && data.offspring.length > 0) {
+                displayOffspring(data.offspring);
+            }
+        }
+        
+        function displayTraits(genes) {
+            const traitsContainer = document.getElementById('traits');
+            const traits = {
+                'O': { name: 'Openness', color: '#8e44ad' },
+                'C': { name: 'Conscientiousness', color: '#2ecc71' },
+                'E': { name: 'Extraversion', color: '#e74c3c' },
+                'A': { name: 'Agreeableness', color: '#3498db' },
+                'N': { name: 'Neuroticism', color: '#f39c12' }
+            };
+            
+            traitsContainer.innerHTML = '';
+            
+            Object.entries(traits).forEach(([key, trait]) => {
+                const value = genes[key] || 0;
+                const percentage = Math.round(value * 100);
+                
+                const traitDiv = document.createElement('div');
+                traitDiv.className = 'trait-bar';
+                traitDiv.innerHTML = `
+                    <div class="trait-name">
+                        <span>${trait.name}</span>
+                        <span>${percentage}%</span>
+                    </div>
+                    <div class="trait-progress">
+                        <div class="trait-fill" style="width: ${percentage}%; background-color: ${trait.color}"></div>
+                    </div>
+                `;
+                
+                traitsContainer.appendChild(traitDiv);
+            });
+        }
+        
+        function displayOffspring(offspring) {
+            const offspringList = document.getElementById('offspringList');
+            
+            if (offspring.length === 0) {
+                offspringList.innerHTML = '<div class="offspring-item"><span>No offspring yet</span></div>';
+                return;
+            }
+            
+            offspringList.innerHTML = offspring.map(child => `
+                <div class="offspring-item">
+                    <div>
+                        <div class="offspring-id">${child.id}</div>
+                        <div style="font-size: 0.8rem; color: #666;">
+                            Born: ${new Date(child.birth_time).toLocaleDateString()}
+                        </div>
+                    </div>
+                    <div class="offspring-status ${child.death_time ? 'dead' : 'alive'}">
+                        ${child.death_time ? 'Dead' : 'Alive'}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function handleBotUpdate(data) {
+            if (data.id === botId) {
+                // Update real-time stats
+                document.getElementById('age').textContent = Math.floor(data.age || 0);
+                document.getElementById('energy').textContent = 
+                    `${Math.floor((data.energy / data.energyMax) * 100)}%`;
+                document.getElementById('state').textContent = data.state || 'Unknown';
+            }
+        }
+        
+        function handleOffspring(data) {
+            if (data.parentId === botId) {
+                // Reload bot data to get updated offspring list
+                loadBotData();
+            }
+        }
+    </script>
+</body>
+</html>

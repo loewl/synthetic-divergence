@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation Dashboard | Synthetic Divergence</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0e27;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: auto 1fr;
+            grid-template-areas: 
+                "header header"
+                "main sidebar";
+            height: 100vh;
+            gap: 1rem;
+            padding: 1rem;
+        }
+        
+        .header {
+            grid-area: header;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 300;
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+        }
+        
+        .main-content {
+            grid-area: main;
+            background: #16213e;
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        
+        .sidebar {
+            grid-area: sidebar;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .panel-section {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        
+        .panel-section h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4ade80;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+        
+        .lineage-container {
+            background: #0f1419;
+            border-radius: 8px;
+            padding: 1rem;
+            height: 400px;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .family-tree {
+            min-height: 100%;
+        }
+        
+        .lineage-node {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 6px;
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .lineage-node:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: translateX(4px);
+        }
+        
+        .lineage-node.generation-0 { margin-left: 0; }
+        .lineage-node.generation-1 { margin-left: 1rem; }
+        .lineage-node.generation-2 { margin-left: 2rem; }
+        .lineage-node.generation-3 { margin-left: 3rem; }
+        .lineage-node.generation-4 { margin-left: 4rem; }
+        
+        .bot-info {
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .bot-status {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        
+        .bot-status.alive {
+            background: #4ade80;
+            color: #000;
+        }
+        
+        .bot-status.deceased {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .trait-preview {
+            display: flex;
+            gap: 2px;
+            margin-top: 0.25rem;
+        }
+        
+        .trait-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .simulation-preview {
+            width: 100%;
+            height: 200px;
+            background: #0f1419;
+            border-radius: 8px;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+        }
+        
+        .simulation-preview:hover {
+            border-color: #667eea;
+            color: white;
+            transform: scale(1.02);
+        }
+        
+        .event-log {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #0f1419;
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+        
+        .event-item {
+            font-size: 0.8rem;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            opacity: 0.8;
+        }
+        
+        .event-item:last-child {
+            border-bottom: none;
+        }
+        
+        .generation-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .generation-card {
+            background: rgba(255,255,255,0.05);
+            padding: 0.75rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .generation-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .generation-info {
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                grid-template-areas: 
+                    "header"
+                    "main"
+                    "sidebar";
+                grid-template-rows: auto 1fr auto;
+            }
+            
+            .sidebar {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+            
+            .panel-section {
+                min-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🐟 Swimbots Evolution Dashboard</h1>
+            <div class="header-controls">
+                <span id="connectionStatus">🔴 Disconnected</span>
+                <a href="/simulation" class="btn" target="_blank">🎮 Open Simulation</a>
+                <a href="/register" class="btn">➕ Add Your Bot</a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <h2>🌳 Family Tree & Lineage</h2>
+            <div class="lineage-container">
+                <div class="family-tree" id="familyTree">
+                    <div class="lineage-node generation-0">
+                        <div class="bot-info">
+                            <span>🤖 Loading lineage data...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <h2 style="margin-top: 2rem;">📊 Generation Overview</h2>
+            <div class="generation-stats" id="generationStats">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+        
+        <div class="sidebar">
+            <div class="panel-section">
+                <h3>📈 Live Statistics</h3>
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <span class="stat-value" id="totalBots">0</span>
+                        <div class="stat-label">Total Bots</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="totalFood">0</span>
+                        <div class="stat-label">Food Items</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="adultBots">0</span>
+                        <div class="stat-label">Adults</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="childBots">0</span>
+                        <div class="stat-label">Children</div>
+                    </div>
+                </div>
+                
+                <a href="/simulation" class="simulation-preview" target="_blank">
+                    🎮 Click to open live simulation →
+                </a>
+            </div>
+            
+            <div class="panel-section">
+                <h3>📝 Recent Events</h3>
+                <div class="event-log" id="eventLog">
+                    <div class="event-item">Dashboard initialized</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let familyData = new Map(); // Store family relationships
+        let generationData = new Map(); // Store generation statistics
+        
+        // Join dashboard room
+        socket.emit('join-dashboard');
+        
+        // Connection status
+        socket.on('connect', () => {
+            document.getElementById('connectionStatus').innerHTML = '🟢 Connected';
+            addEvent('Connected to simulation server');
+        });
+        
+        socket.on('disconnect', () => {
+            document.getElementById('connectionStatus').innerHTML = '🔴 Disconnected';
+            addEvent('Lost connection to simulation server');
+        });
+        
+        // Listen for simulation updates
+        socket.on('simulation-state', (data) => {
+            updateStatistics(data.stats);
+            updateFamilyTree(data.bots);
+        });
+        
+        // Listen for specific events
+        socket.on('bot-born', (data) => {
+            addEvent(`🐣 New bot born: ${data.botId} (Gen ${data.generation})`);
+            addToFamily(data);
+        });
+        
+        socket.on('bot-died', (data) => {
+            addEvent(`💀 Bot died: ${data.botId} (Age: ${data.age}s)`);
+            markBotDead(data.botId);
+        });
+        
+        socket.on('bot-mated', (data) => {
+            addEvent(`💕 Mating: ${data.parent1} + ${data.parent2} → ${data.offspring}`);
+        });
+        
+        function updateStatistics(stats) {
+            document.getElementById('totalBots').textContent = stats.totalBots || 0;
+            document.getElementById('totalFood').textContent = stats.food || 0;
+            document.getElementById('adultBots').textContent = stats.adults || 0;
+            document.getElementById('childBots').textContent = stats.children || 0;
+        }
+        
+        function updateFamilyTree(bots) {
+            // Group bots by generation
+            const generations = new Map();
+            
+            bots.forEach(bot => {
+                const gen = bot.generation || 0;
+                if (!generations.has(gen)) {
+                    generations.set(gen, []);
+                }
+                generations.get(gen).push(bot);
+                
+                // Store family data
+                familyData.set(bot.id, {
+                    ...bot,
+                    alive: true
+                });
+            });
+            
+            renderFamilyTree(generations);
+            updateGenerationStats(generations);
+        }
+        
+        function renderFamilyTree(generations) {
+            const treeContainer = document.getElementById('familyTree');
+            treeContainer.innerHTML = '';
+            
+            // Sort generations
+            const sortedGens = Array.from(generations.keys()).sort((a, b) => a - b);
+            
+            sortedGens.forEach(gen => {
+                const bots = generations.get(gen);
+                
+                // Generation header
+                const genHeader = document.createElement('div');
+                genHeader.style.cssText = `
+                    font-weight: bold; 
+                    color: #667eea; 
+                    margin: 1rem 0 0.5rem 0; 
+                    padding: 0.5rem; 
+                    background: rgba(102, 126, 234, 0.1); 
+                    border-radius: 4px;
+                `;
+                genHeader.textContent = `Generation ${gen} (${bots.length} bots)`;
+                treeContainer.appendChild(genHeader);
+                
+                // Bots in this generation
+                bots.forEach(bot => {
+                    const node = createBotNode(bot, gen);
+                    treeContainer.appendChild(node);
+                });
+            });
+        }
+        
+        function createBotNode(bot, generation) {
+            const node = document.createElement('div');
+            node.className = `lineage-node generation-${Math.min(generation, 4)}`;
+            
+            const traits = bot.genes || {};
+            const traitDots = ['O', 'C', 'E', 'A', 'N'].map(trait => {
+                const value = traits[trait] || 0;
+                const color = getTraitColor(trait);
+                return `<div class="trait-dot" style="background-color: ${color}; opacity: ${0.3 + value * 0.7}"></div>`;
+            }).join('');
+            
+            const age = bot.age ? Math.floor(bot.age) : 0;
+            const energy = bot.energy ? Math.round(bot.energy * 100) : 0;
+            
+            node.innerHTML = `
+                <div class="bot-info">
+                    <span>🤖 ${bot.id || 'Unknown'}</span>
+                    <span class="bot-status alive">Alive</span>
+                </div>
+                <div style="font-size: 0.7rem; opacity: 0.8;">
+                    Age: ${age}s | Energy: ${energy}% | State: ${bot.state || 'unknown'}
+                </div>
+                <div class="trait-preview">${traitDots}</div>
+            `;
+            
+            node.addEventListener('click', () => {
+                showBotDetails(bot);
+            });
+            
+            return node;
+        }
+        
+        function getTraitColor(trait) {
+            const colors = {
+                'O': '#8e44ad', // Purple
+                'C': '#27ae60', // Green  
+                'E': '#e74c3c', // Red
+                'A': '#3498db', // Blue
+                'N': '#f39c12'  // Orange
+            };
+            return colors[trait] || '#95a5a6';
+        }
+        
+        function updateGenerationStats(generations) {
+            const container = document.getElementById('generationStats');
+            container.innerHTML = '';
+            
+            Array.from(generations.entries()).forEach(([gen, bots]) => {
+                const avgAge = bots.reduce((sum, bot) => sum + (bot.age || 0), 0) / bots.length;
+                const avgEnergy = bots.reduce((sum, bot) => sum + (bot.energy || 0), 0) / bots.length;
+                
+                const card = document.createElement('div');
+                card.className = 'generation-card';
+                card.innerHTML = `
+                    <div class="generation-number">${gen}</div>
+                    <div class="generation-info">${bots.length} bots</div>
+                    <div class="generation-info">Avg age: ${Math.floor(avgAge)}s</div>
+                    <div class="generation-info">Avg energy: ${Math.round(avgEnergy * 100)}%</div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+        
+        function addToFamily(data) {
+            familyData.set(data.botId, data);
+        }
+        
+        function markBotDead(botId) {
+            if (familyData.has(botId)) {
+                familyData.get(botId).alive = false;
+            }
+            
+            // Update UI to show bot as deceased
+            const nodes = document.querySelectorAll('.lineage-node');
+            nodes.forEach(node => {
+                if (node.textContent.includes(botId)) {
+                    const status = node.querySelector('.bot-status');
+                    if (status) {
+                        status.textContent = 'Deceased';
+                        status.className = 'bot-status deceased';
+                    }
+                }
+            });
+        }
+        
+        function showBotDetails(bot) {
+            // Create a modal or detailed view
+            alert(`Bot Details:\nID: ${bot.id}\nAge: ${Math.floor(bot.age || 0)}s\nEnergy: ${Math.round((bot.energy || 0) * 100)}%\nState: ${bot.state}\nGeneration: ${bot.generation || 0}`);
+        }
+        
+        function addEvent(message) {
+            const eventLog = document.getElementById('eventLog');
+            const eventItem = document.createElement('div');
+            eventItem.className = 'event-item';
+            eventItem.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            
+            eventLog.insertBefore(eventItem, eventLog.firstChild);
+            
+            // Keep only last 20 events
+            while (eventLog.children.length > 20) {
+                eventLog.removeChild(eventLog.lastChild);
+            }
+        }
+        
+        // Initialize with some demo data if no connection
+        setTimeout(() => {
+            if (document.getElementById('connectionStatus').textContent.includes('Disconnected')) {
+                // Show demo data
+                updateStatistics({ totalBots: 12, food: 8, adults: 7, children: 5 });
+                addEvent('Demo mode - connect to simulation for live data');
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Swimbots – Evolution Sandbox</title>
+  <link rel="stylesheet" href="styles/main.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #0a0e27;
+      overflow: hidden;
+    }
+    
+    #canvas {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+    
+    .nav-overlay {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 1000;
+    }
+    
+    .nav-btn {
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      text-decoration: none;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s ease;
+    }
+    
+    .nav-btn:hover {
+      background: rgba(0, 0, 0, 0.9);
+    }
+    
+    .info-overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      max-width: 300px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .close-btn {
+      position: absolute;
+      top: 5px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation overlay -->
+  <div class="nav-overlay">
+    <a href="/dashboard" class="nav-btn">📊 Dashboard</a>
+    <a href="/register" class="nav-btn">➕ Add Bot</a>
+    <button class="nav-btn" onclick="toggleInfo()">ℹ️ Info</button>
+  </div>
+  
+  <!-- Info overlay -->
+  <div class="info-overlay" id="infoOverlay" style="display: none;">
+    <button class="close-btn" onclick="toggleInfo()">×</button>
+    <h3>🐟 Swimbots Evolution</h3>
+    <p>Watch artificial life evolve in real-time! Each bot has unique genes that affect their behavior and appearance.</p>
+    <ul>
+      <li><strong>Click</strong> a bot to inspect it</li>
+      <li><strong>Space</strong> to pause/resume</li>
+      <li><strong>H</strong> to hide/show UI and names</li>
+      <li><strong>Ctrl+R</strong> to reset</li>
+    </ul>
+    <p>Each bot has animated fins and a unique name based on their personality traits!</p>
+    <p>Visit the <a href="/dashboard" style="color: #4ade80;">Dashboard</a> for detailed family trees and statistics!</p>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <script type="module">
+    import { Simulation } from './src/core/Simulation.js';
+    import { Renderer } from './src/rendering/Renderer.js';
+
+    class SwimbotsApp {
+      constructor() {
+        this.canvas = document.getElementById('canvas');
+        this.simulation = new Simulation();
+        this.renderer = new Renderer(this.canvas);
+        this.isPaused = false;
+        this.showUI = true;
+        
+        // Connect simulation with renderer for world size
+        this.simulation.setRenderer(this.renderer);
+        this.simulation.getWorldSize = () => this.renderer.getWorldSize();
+        
+        this.lastTime = performance.now();
+        this.setupEventListeners();
+        this.initialize();
+      }
+
+      setupEventListeners() {
+        // Handle canvas clicks for bot selection
+        this.canvas.addEventListener('click', (e) => {
+          const rect = this.canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          
+          // Convert to world coordinates
+          const worldSize = this.renderer.getWorldSize();
+          const worldX = (x / rect.width) * worldSize.w;
+          const worldY = (y / rect.height) * worldSize.h;
+          
+          // Find closest bot
+          let closestBot = null;
+          let closestDist = Infinity;
+          
+          for (const bot of this.simulation.bots) {
+            const dist = Math.sqrt((bot.x - worldX) ** 2 + (bot.y - worldY) ** 2);
+            if (dist < closestDist && dist < 20) { // 20 pixel threshold
+              closestDist = dist;
+              closestBot = bot;
+            }
+          }
+          
+          if (closestBot) {
+            console.log('Selected bot:', closestBot);
+            this.showBotInfo(closestBot);
+          }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+          switch(e.key) {
+            case ' ':
+              e.preventDefault();
+              this.togglePause();
+              break;
+            case 'r':
+              if (e.ctrlKey) {
+                e.preventDefault();
+                this.resetSimulation();
+              }
+              break;
+            case 'h':
+              e.preventDefault();
+              this.toggleUI();
+              break;
+          }
+        });
+      }
+
+      showBotInfo(bot) {
+        const finSizes = {
+          tail: (0.9 + bot.genes.E * 0.8).toFixed(2),
+          pectoral: (0.8 + bot.genes.O * 0.6).toFixed(2),
+          dorsal: (0.7 + bot.genes.C * 0.5).toFixed(2),
+          pelvic: (0.6 + bot.genes.N * 0.7).toFixed(2)
+        };
+        
+        const info = `
+🐟 ${bot.name}
+ID: ${bot.id}
+Age: ${Math.floor(bot.age)}s
+Energy: ${Math.round(bot.energy * 100)}%
+State: ${bot.state}
+Generation: ${bot.generation || 0}
+
+🧬 Genes (OCEAN):
+O: ${bot.genes.O.toFixed(2)} (Pectoral fins: ${finSizes.pectoral})
+C: ${bot.genes.C.toFixed(2)} (Dorsal/Anal fins: ${finSizes.dorsal})
+E: ${bot.genes.E.toFixed(2)} (Tail size: ${finSizes.tail})
+A: ${bot.genes.A.toFixed(2)} (Fin efficiency)
+N: ${bot.genes.N.toFixed(2)} (Pelvic fins: ${finSizes.pelvic})
+
+🏊 Swimming Stats:
+Speed: ${bot.baseSpeed.toFixed(1)}
+Turn Rate: ${bot.maxTurnRate.toFixed(2)}
+Drag: ${bot.drag.toFixed(3)}
+        `;
+        alert(info);
+      }
+
+      initialize() {
+        this.simulation.reset();
+        console.assert(this.simulation.bots.length > 0, '[Swimbots] no bots after reset');
+        this.startGameLoop();
+      }
+
+      startGameLoop() {
+        const frame = () => {
+          const now = performance.now();
+          let dt = (now - this.lastTime) / 1000;
+          this.lastTime = now;
+          dt = Math.min(dt, 0.05); // Cap delta time
+          
+          const worldSize = this.renderer.getWorldSize();
+          
+          if (!this.isPaused) {
+            this.simulation.step(dt, worldSize.w, worldSize.h, 1.0); // Default food rate
+          }
+          
+          this.renderer.render(this.simulation, { showNames: this.showUI });
+          
+          requestAnimationFrame(frame);
+        };
+        
+        requestAnimationFrame(frame);
+      }
+
+      togglePause() {
+        this.isPaused = !this.isPaused;
+      }
+
+      resetSimulation() {
+        this.simulation.reset();
+      }
+
+      toggleUI() {
+        this.showUI = !this.showUI;
+        const overlay = document.querySelector('.nav-overlay');
+        const infoOverlay = document.getElementById('infoOverlay');
+        
+        if (this.showUI) {
+          overlay.style.display = 'flex';
+          if (infoOverlay.style.display === 'block') {
+            infoOverlay.style.display = 'block';
+          }
+        } else {
+          overlay.style.display = 'none';
+          infoOverlay.style.display = 'none';
+        }
+      }
+    }
+
+    // Global functions
+    window.toggleInfo = () => {
+      if (!app.showUI) return; // Don't show info if UI is hidden
+      const overlay = document.getElementById('infoOverlay');
+      overlay.style.display = overlay.style.display === 'none' ? 'block' : 'none';
+    };
+
+    // Initialize the application
+    const app = new SwimbotsApp();
+    window.app = app; // Make accessible for debugging
+  </script>
+</body>
+</html>
