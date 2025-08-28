@@ -93,20 +93,6 @@ export class SimulationManager {
         isUserBot: bot.isUserBot || false
       });
 
-      // Notify users if their bot reproduced
-      if (parentA) {
-        const user = await this.db.getUserById(parentA);
-        if (user) {
-          await this.emailService.sendBirthNotification(user.email, bot.parentA.id, bot.id);
-        }
-      }
-      if (parentB && parentB !== parentA) {
-        const user = await this.db.getUserById(parentB);
-        if (user) {
-          await this.emailService.sendBirthNotification(user.email, bot.parentB.id, bot.id);
-        }
-      }
-
       // Broadcast to tracking clients
       this.io.to(`bot-${bot.parentA?.id}`).emit('bot-offspring', {
         parentId: bot.parentA?.id,
@@ -143,9 +129,17 @@ export class SimulationManager {
     return null;
   }
 
-  createUserBot(userId) {
-    // Create a new bot in the simulation
-    const bot = this.simulation.spawnRandomBot();
+  createUserBot(userId, customTraits = null) {
+    let bot;
+    
+    if (customTraits) {
+      // Create bot with custom OCEAN traits
+      const genes = this.simulation.createCustomGenes(customTraits);
+      bot = this.simulation.spawnBotWithGenes(genes);
+    } else {
+      // Create a new bot with random traits
+      bot = this.simulation.spawnRandomBot();
+    }
     
     // Track ownership
     this.userBots.set(userId, bot.id);

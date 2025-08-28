@@ -31,7 +31,7 @@ export class EmailService {
         
         <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
           <h3>🤖 Your Bot: ${botId}</h3>
-          <p>Your bot is now exploring, seeking food, and looking for mates. As it evolves and reproduces, you'll receive updates about its offspring.</p>
+          <p>Your bot is now exploring, seeking food, and looking for mates. Watch it evolve and thrive in the digital ocean!</p>
         </div>
         
         <p><strong>Track your bot:</strong><br>
@@ -43,8 +43,6 @@ export class EmailService {
         <a href="${process.env.BASE_URL}/dashboard" style="color: #0066cc;">
           ${process.env.BASE_URL}/dashboard
         </a></p>
-        
-        <p>You'll receive an email notification whenever your bot successfully reproduces!</p>
         
         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
         <p style="font-size: 12px; color: #666;">

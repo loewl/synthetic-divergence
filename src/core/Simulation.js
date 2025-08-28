@@ -180,4 +180,28 @@ export class Simulation {
     this.addBot(bot);
     return bot;
   }
+
+  createCustomGenes(oceanTraits) {
+    const g = new Genes();
+    
+    // Set OCEAN traits from user input (0-1 range)
+    g.O = clamp(oceanTraits.openness || 0.5, 0, 1);
+    g.C = clamp(oceanTraits.conscientiousness || 0.5, 0, 1);
+    g.E = clamp(oceanTraits.extraversion || 0.5, 0, 1);
+    g.A = clamp(oceanTraits.agreeableness || 0.5, 0, 1);
+    g.N = clamp(oceanTraits.neuroticism || 0.5, 0, 1);
+    
+    // Set visual traits
+    g.hue = rand(360);
+    g.bodySize = rand(13, 8);
+    
+    return g;
+  }
+
+  spawnBotWithGenes(genes) {
+    const worldSize = this.getWorldSize();
+    const bot = new Swimbot(rand(worldSize.w), rand(worldSize.h), genes, this);
+    this.addBot(bot);
+    return bot;
+  }
 }

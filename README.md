@@ -1,53 +1,47 @@
-# Synthetic Divergence - Swimbots Evolution Sandbox
+# Synthetic Divergence - Evolution Simulation
 
-🐟 An interactive evolution simulation featuring AI-driven creatures with personality traits based on the Big Five (OCEAN) psychological model.
+🧬 Watch primordial swimmers evolve in real-time. Each creature has unique personality traits that affect their fins, behavior, and survival.
 
-## Getting Started
+## Quick Start
 
-Serve over local webserver, easiest: 
-```bash
-python -m http.server 8000
-```
-in the project dir, then open `http://localhost:8000`
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-Alternatively, use Node.js:
-```bash
-npx http-server -p 8000
-```
+2. **Start the server:**
+   ```bash
+   npm start
+   ```
 
-## Project Structure
+3. **Open your browser:**
+   - Main simulation: `http://localhost:3000`
+   - Dashboard with family trees: `http://localhost:3000/dashboard`
+   - Add your own bot: `http://localhost:3000/register`
 
-```
-synthetic-divergence/
-├── index.html                    # Main application entry
-├── styles/
-│   └── main.css                 # Application styling
-└── src/
-    ├── main.js                  # Application bootstrap
-    ├── core/
-    │   ├── constants.js         # Game constants and colors
-    │   ├── SpatialHashGrid.js   # Spatial optimization system
-    │   └── Simulation.js        # Main simulation engine
-    ├── entities/
-    │   ├── Food.js              # Food particle behavior
-    │   ├── Genes.js             # Genetic system and inheritance
-    │   └── Swimbot.js           # Creature AI and behavior
-    ├── rendering/
-    │   └── Renderer.js          # Canvas rendering system
-    ├── ui/
-    │   ├── UIController.js      # User interface controls
-    │   └── StatsPanel.js        # Statistics and metrics display
-    └── utils/
-        └── math.js              # Mathematical utilities
-```
+## Features
 
-## How It Works
+- **OCEAN Personality Traits** - Each bot's fins and behavior reflect their psychological profile
+- **Real-time Evolution** - Watch traits emerge and change over generations  
+- **Family Trees** - Track lineage and genetic inheritance in the dashboard
+- **Interactive Controls** - Click bots for details, adjust simulation parameters
 
-Swimbots are autonomous agents that:
-- **Seek food** to survive and gain energy
-- **Find mates** with similar colors (hue-based attraction)
-- **Reproduce** through genetic crossover with mutation
-- **Evolve** personality traits over generations
+## Controls
+
+- **Click** any bot to see detailed stats
+- **Space** to pause/resume simulation
+- **H** to toggle UI and bot names
+- **Ctrl+R** to reset simulation
+
+## The Science
+
+Bots exhibit emergent behaviors through:
+- **Genetic crossover** with random mutations
+- **Trait-based mate selection** (similar colors attract)
+- **Survival pressure** (energy management, aging)
+- **Fin morphology** that affects swimming performance
+
+Each bot's OCEAN traits determine their fin sizes and swimming abilities, creating visible diversity and functional trade-offs in the population.
 - **Die** from old age or starvation
 
 ## OCEAN Personality Traits

@@ -305,94 +305,134 @@ export class Swimbot {
     ctx.rotate(this.dir);
     
     ctx.shadowColor = `hsla(${hue},90%,65%,.35)`;
-    ctx.shadowBlur = 8; // Reduced shadow blur
+    ctx.shadowBlur = 8; 
     
-    // Draw tail fins first (behind the body) - influenced by Extraversion
-    const tailSwim = Math.sin(t * 8 + swimSpeed * 10) * (0.3 + swimSpeed * 0.4);
-    const tailSize = s * 0.9 * eFinSize; // Extraverted bots have bigger display tails
-    
-    // Main tail - simplified but more visible
-    ctx.save();
-    ctx.translate(-bodyW * 0.9, 0);
-    ctx.rotate(tailSwim * 0.5);
-    
-    // Simple triangular tail
+    // Draw organic body shape first (more worm/slug-like)
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(-tailSize * 1.2, -tailSize * 0.6);
-    ctx.lineTo(-tailSize * 1.4, 0);
-    ctx.lineTo(-tailSize * 1.2, tailSize * 0.6);
+    const points = 24;
+    const rBase = Math.max(bodyW, bodyH);
+    for (let i = 0; i <= points; i++) {
+      const a = (i / points) * Math.PI * 2;
+      // More organic wobbling with trait influence
+      const wob = Math.sin(a * 4 + t * 2.5) * (0.08 + this.genes.N * 0.06) + 
+                  Math.cos(a * 6 + t * 1.8) * (0.05 + this.genes.O * 0.04);
+      
+      // Make it more elongated and worm-like
+      let rx = bodyW * (1 + 0.15 * wob);
+      let ry = bodyH * (1 + 0.12 * wob);
+      
+      // Taper the front and back for worm shape
+      const frontTaper = Math.max(0.6, 1 - Math.pow((a - Math.PI) / Math.PI, 2) * 0.4);
+      const backTaper = Math.max(0.7, 1 - Math.pow((a) / Math.PI, 2) * 0.3);
+      
+      rx *= frontTaper * backTaper;
+      ry *= frontTaper * backTaper;
+      
+      const x = Math.cos(a) * rx;
+      const y = Math.sin(a) * ry;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    
+    const fillGrad = ctx.createRadialGradient(0, 0, bodyH * 0.2, 0, 0, rBase * 1.05);
+    fillGrad.addColorStop(0, `hsla(${(hue + 20) % 360},85%,75%,0.95)`);
+    fillGrad.addColorStop(0.7, `hsla(${hue},80%,55%,0.9)`);
+    fillGrad.addColorStop(1, `hsla(${hue},70%,35%,0.8)`);
+    ctx.fillStyle = fillGrad;
+    ctx.strokeStyle = `hsla(${hue},95%,85%,.9)`;
+    ctx.lineWidth = 1.0;
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw tail fin attached to body - influenced by Extraversion
+    const tailSwim = Math.sin(t * 6 + swimSpeed * 8) * (0.3 + swimSpeed * 0.4);
+    const tailSize = s * 0.9 * eFinSize;
+    
+    ctx.save();
+    ctx.translate(-bodyW * 0.85, 0); // Attach to body edge
+    ctx.rotate(tailSwim * 0.4);
+    
+    // Flowing tail that blends with body
+    ctx.beginPath();
+    ctx.moveTo(bodyW * 0.4, -tailSize * 0.3); // Start inside body
+    ctx.quadraticCurveTo(
+        -tailSize * 0.6, -tailSize * 0.5,
+        -tailSize * 1.2, -tailSize * 0.2
+    );
+    ctx.quadraticCurveTo(
+        -tailSize * 1.4, 0,
+        -tailSize * 1.2, tailSize * 0.2
+    );
+    ctx.quadraticCurveTo(
+        -tailSize * 0.6, tailSize * 0.5,
+        bodyW * 0.4, tailSize * 0.3
+    );
     ctx.closePath();
     
-    ctx.fillStyle = `hsla(${hue},75%,55%,0.9)`;
-    ctx.strokeStyle = `hsla(${hue},85%,65%,1.0)`;
-    ctx.lineWidth = 1;
-    ctx.fill();
-    ctx.stroke();
-    
-    ctx.restore();
-    
-    // Dorsal fin (top) - influenced by Conscientiousness
-    ctx.save();
-    ctx.translate(-bodyW * 0.2, -bodyH * 0.8);
-    ctx.rotate(tailSwim * 0.3 * cFinSize);
-    
-    ctx.beginPath();
-    const dorsalSize = s * 0.6 * cFinSize;
-    ctx.ellipse(0, 0, dorsalSize, dorsalSize * 0.5, 0, 0, TAU);
-    ctx.fillStyle = `hsla(${hue},80%,60%,0.9)`;
-    ctx.strokeStyle = `hsla(${hue},90%,70%,1.0)`;
+    ctx.fillStyle = `hsla(${hue},78%,52%,0.92)`;
+    ctx.strokeStyle = `hsla(${hue},88%,62%,1.0)`;
     ctx.lineWidth = 0.8;
     ctx.fill();
     ctx.stroke();
     
     ctx.restore();
+
+    // Draw side fins attached to body - influenced by Openness  
+    const pectoralSwim = Math.sin(t * 5 + swimSpeed * 7) * (0.3 + swimSpeed * 0.4);
+    const pectoralSize = s * 0.8 * oFinSize; // Bigger but not huge
+    const organicWave = Math.sin(t * 3 + this.id * 0.5) * 0.15;
     
-    // Anal fin (bottom) - influenced by Conscientiousness  
+    // Left side fin - starts from body edge and extends outward
     ctx.save();
-    ctx.translate(-bodyW * 0.2, bodyH * 0.8);
-    ctx.rotate(-tailSwim * 0.3 * cFinSize);
+    ctx.translate(bodyW * 0.1, -bodyH * 0.8); // Position at body edge
+    ctx.rotate(pectoralSwim * 0.4 + this.genes.O * 0.3 + organicWave);
     
     ctx.beginPath();
-    const analSize = s * 0.5 * cFinSize;
-    ctx.ellipse(0, 0, analSize, analSize * 0.5, 0, 0, TAU);
-    ctx.fillStyle = `hsla(${hue},80%,60%,0.8)`;
-    ctx.strokeStyle = `hsla(${hue},90%,70%,0.9)`;
-    ctx.lineWidth = 0.8;
+    ctx.moveTo(0, 0); // Start exactly at body edge
+    ctx.quadraticCurveTo(
+        pectoralSize * 0.3, -pectoralSize * 0.8,
+        pectoralSize * 0.8, -pectoralSize * 0.6 + organicWave * pectoralSize * 0.3
+    );
+    ctx.quadraticCurveTo(
+        pectoralSize * 0.6, -pectoralSize * 0.2,
+        pectoralSize * 0.3, pectoralSize * 0.1
+    );
+    ctx.quadraticCurveTo(
+        pectoralSize * 0.1, pectoralSize * 0.3,
+        0, 0 // Return to body edge
+    );
+    
+    ctx.fillStyle = `hsla(${hue + 20},80%,58%,0.9)`;
+    ctx.strokeStyle = `hsla(${hue + 30},90%,68%,1.0)`;
+    ctx.lineWidth = 0.7;
     ctx.fill();
     ctx.stroke();
     
     ctx.restore();
     
-    // Pectoral fins (side fins) - influenced by Openness
-    const pectoralSwim = Math.sin(t * 6 + swimSpeed * 8) * (0.2 + swimSpeed * 0.3);
-    const pectoralSize = s * 0.8 * oFinSize; // Made larger for visibility
-    
-    // Left pectoral fin
+    // Right side fin - slightly different for asymmetry
     ctx.save();
-    ctx.translate(bodyW * 0.3, -bodyH * 0.5);
-    ctx.rotate(pectoralSwim * 0.4 + this.genes.O * 0.3);
+    ctx.translate(bodyW * 0.1, bodyH * 0.8); // Position at body edge
+    ctx.rotate(-pectoralSwim * 0.35 - this.genes.O * 0.25 - organicWave * 0.8);
     
     ctx.beginPath();
-    ctx.ellipse(0, 0, pectoralSize, pectoralSize * 0.5, 0, 0, TAU);
-    ctx.fillStyle = `hsla(${hue + 20},85%,65%,0.95)`; // Much more opaque
-    ctx.strokeStyle = `hsla(${hue + 30},90%,75%,1.0)`;
-    ctx.lineWidth = 0.8;
-    ctx.fill();
-    ctx.stroke();
+    ctx.moveTo(0, 0); // Start exactly at body edge
+    ctx.quadraticCurveTo(
+        pectoralSize * 0.2, pectoralSize * 0.9,
+        pectoralSize * 0.7, pectoralSize * 0.7 - organicWave * pectoralSize * 0.4
+    );
+    ctx.quadraticCurveTo(
+        pectoralSize * 0.5, pectoralSize * 0.1,
+        pectoralSize * 0.2, -pectoralSize * 0.2
+    );
+    ctx.quadraticCurveTo(
+        pectoralSize * 0.05, -pectoralSize * 0.4,
+        0, 0 // Return to body edge
+    );
     
-    ctx.restore();
-    
-    // Right pectoral fin
-    ctx.save();
-    ctx.translate(bodyW * 0.3, bodyH * 0.5);
-    ctx.rotate(-pectoralSwim * 0.4 - this.genes.O * 0.3);
-    
-    ctx.beginPath();
-    ctx.ellipse(0, 0, pectoralSize, pectoralSize * 0.5, 0, 0, TAU);
-    ctx.fillStyle = `hsla(${hue + 20},85%,65%,0.95)`; // Much more opaque
-    ctx.strokeStyle = `hsla(${hue + 30},90%,75%,1.0)`;
-    ctx.lineWidth = 0.8;
+    ctx.fillStyle = `hsla(${hue + 15},82%,55%,0.88)`;
+    ctx.strokeStyle = `hsla(${hue + 25},92%,65%,1.0)`;
+    ctx.lineWidth = 0.7;
     ctx.fill();
     ctx.stroke();
     
@@ -434,38 +474,10 @@ export class Swimbot {
       ctx.restore();
     }
     
-    // Reset shadow for body
-    ctx.shadowBlur = 12;
-    
-    // Draw body shape
-    ctx.beginPath();
-    const points = 20;
-    const rBase = Math.max(bodyW, bodyH);
-    for (let i = 0; i <= points; i++) {
-      const a = (i / points) * TAU;
-      const wob = Math.sin(a * 3 + t * 2) * 0.04 + Math.cos(a * 5 + t * 1.5) * 0.03;
-      const rx = bodyW * (1 + 0.10 * wob);
-      const ry = bodyH * (1 - 0.10 * wob);
-      const x = Math.cos(a) * rx;
-      const y = Math.sin(a) * ry;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    
-    const fillGrad = ctx.createRadialGradient(0, 0, bodyH * 0.2, 0, 0, rBase * 1.05);
-    fillGrad.addColorStop(0, `hsla(${(hue + 20) % 360},80%,70%,0.9)`);
-    fillGrad.addColorStop(1, `hsla(${hue},70%,40%,0.6)`);
-    ctx.fillStyle = fillGrad;
-    ctx.strokeStyle = `hsla(${hue},95%,85%,.8)`;
-    ctx.lineWidth = 1.2;
-    ctx.fill();
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-    
     // Draw eye
     ctx.fillStyle = 'rgba(0,0,0,.6)';
     ctx.beginPath();
-    ctx.arc(bodyW * 0.45, -bodyH * 0.2, 3.2, 0, TAU);
+    ctx.arc(bodyW * 0.45, -bodyH * 0.2, 3.2, 0, Math.PI * 2);
     ctx.fill();
     
     // Draw pupil with slight animation
@@ -473,7 +485,7 @@ export class Swimbot {
     ctx.beginPath();
     const pupilX = bodyW * 0.45 + Math.sin(t * 0.5) * 0.5;
     const pupilY = -bodyH * 0.2 + Math.cos(t * 0.3) * 0.3;
-    ctx.arc(pupilX, pupilY, 1.5, 0, TAU);
+    ctx.arc(pupilX, pupilY, 1.5, 0, Math.PI * 2);
     ctx.fill();
     
     ctx.restore();

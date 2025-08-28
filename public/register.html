@@ -139,6 +139,96 @@
             border: 1px solid #f5c6cb;
             color: #721c24;
         }
+        
+        .traits-section {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .traits-section h3 {
+            margin: 0 0 1rem 0;
+            color: #333;
+            text-align: center;
+        }
+        
+        .trait-group {
+            margin-bottom: 1rem;
+        }
+        
+        .trait-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .trait-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .trait-value {
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            min-width: 30px;
+            text-align: center;
+        }
+        
+        .trait-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            appearance: none;
+        }
+        
+        .trait-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+        
+        .trait-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .trait-description {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 0.25rem;
+            font-style: italic;
+        }
+        
+        .random-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin: 0.5rem 0;
+            transition: background-color 0.2s;
+        }
+        
+        .random-btn:hover {
+            background: #218838;
+        }
     </style>
 </head>
 <body>
@@ -148,7 +238,7 @@
         
         <div class="info-box">
             <h3>What happens next?</h3>
-            <p>Your unique swimbot will be created with random traits and placed in our digital ocean. You'll receive an email with a tracking link to follow its life, reproduction, and lineage!</p>
+            <p>Your unique swimbot will be created with your chosen traits and placed in our digital ocean. You'll receive an email with a tracking link to follow its life and lineage!</p>
         </div>
         
         <div id="message" class="message"></div>
@@ -166,6 +256,56 @@
                        placeholder="How should we address you?">
             </div>
             
+            <div class="traits-section">
+                <h3>🧬 Customize Your Bot's Personality (OCEAN Traits)</h3>
+                <button type="button" class="random-btn" onclick="randomizeTraits()">🎲 Randomize All Traits</button>
+                
+                <div class="trait-group">
+                    <div class="trait-label">
+                        <span class="trait-name">🔮 Openness (Exploration)</span>
+                        <span class="trait-value" id="openness-value">50</span>
+                    </div>
+                    <input type="range" class="trait-slider" id="openness" min="0" max="100" value="50">
+                    <div class="trait-description">Higher values = larger pectoral fins, wider search radius, more exploration</div>
+                </div>
+                
+                <div class="trait-group">
+                    <div class="trait-label">
+                        <span class="trait-name">🎯 Conscientiousness (Stability)</span>
+                        <span class="trait-value" id="conscientiousness-value">50</span>
+                    </div>
+                    <input type="range" class="trait-slider" id="conscientiousness" min="0" max="100" value="50">
+                    <div class="trait-description">Higher values = stability fins, controlled movement, better energy management</div>
+                </div>
+                
+                <div class="trait-group">
+                    <div class="trait-label">
+                        <span class="trait-name">⚡ Extraversion (Energy)</span>
+                        <span class="trait-value" id="extraversion-value">50</span>
+                    </div>
+                    <input type="range" class="trait-slider" id="extraversion" min="0" max="100" value="50">
+                    <div class="trait-description">Higher values = larger tail fins, faster swimming, more active behavior</div>
+                </div>
+                
+                <div class="trait-group">
+                    <div class="trait-label">
+                        <span class="trait-name">🤝 Agreeableness (Cooperation)</span>
+                        <span class="trait-value" id="agreeableness-value">50</span>
+                    </div>
+                    <input type="range" class="trait-slider" id="agreeableness" min="0" max="100" value="50">
+                    <div class="trait-description">Higher values = cooperative swimming, less competition, more efficient movement</div>
+                </div>
+                
+                <div class="trait-group">
+                    <div class="trait-label">
+                        <span class="trait-name">😰 Neuroticism (Anxiety)</span>
+                        <span class="trait-value" id="neuroticism-value">50</span>
+                    </div>
+                    <input type="range" class="trait-slider" id="neuroticism" min="0" max="100" value="50">
+                    <div class="trait-description">Higher values = nervous energy fins, jittery movement, anxious behavior</div>
+                </div>
+            </div>
+            
             <button type="submit" class="submit-btn" id="submitBtn">
                 Create My Swimbot
             </button>
@@ -177,6 +317,30 @@
     </div>
 
     <script>
+        // Update trait value displays when sliders change
+        const traits = ['openness', 'conscientiousness', 'extraversion', 'agreeableness', 'neuroticism'];
+        
+        traits.forEach(trait => {
+            const slider = document.getElementById(trait);
+            const valueDisplay = document.getElementById(`${trait}-value`);
+            
+            slider.addEventListener('input', () => {
+                valueDisplay.textContent = slider.value;
+            });
+        });
+        
+        // Randomize all traits
+        function randomizeTraits() {
+            traits.forEach(trait => {
+                const slider = document.getElementById(trait);
+                const valueDisplay = document.getElementById(`${trait}-value`);
+                const randomValue = Math.floor(Math.random() * 101);
+                
+                slider.value = randomValue;
+                valueDisplay.textContent = randomValue;
+            });
+        }
+        
         document.getElementById('registrationForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -184,6 +348,13 @@
             const messageDiv = document.getElementById('message');
             const email = document.getElementById('email').value;
             const name = document.getElementById('name').value;
+            
+            // Collect trait values (convert to 0-1 range)
+            const oceanTraits = {};
+            traits.forEach(trait => {
+                const slider = document.getElementById(trait);
+                oceanTraits[trait] = parseFloat(slider.value) / 100;
+            });
             
             // Disable form
             submitBtn.disabled = true;
@@ -196,18 +367,27 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ email, name })
+                    body: JSON.stringify({ 
+                        email, 
+                        name, 
+                        oceanTraits 
+                    })
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
                     messageDiv.className = 'message success';
-                    messageDiv.textContent = `Success! Your bot ${data.botId} has been created. Check your email for tracking info!`;
+                    messageDiv.textContent = `Success! Your bot ${data.botId} has been created with your custom traits. Check your email for tracking info!`;
                     messageDiv.style.display = 'block';
                     
                     // Reset form
                     document.getElementById('registrationForm').reset();
+                    
+                    // Reset trait displays
+                    traits.forEach(trait => {
+                        document.getElementById(`${trait}-value`).textContent = '50';
+                    });
                     
                     // Redirect to tracking page after a moment
                     setTimeout(() => {

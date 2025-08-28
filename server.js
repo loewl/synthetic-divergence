@@ -55,7 +55,7 @@ app.get('/simulation', (req, res) => {
 // API Routes
 app.post('/api/register', async (req, res) => {
   try {
-    const { email, name } = req.body;
+    const { email, name, oceanTraits } = req.body;
     
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
@@ -67,9 +67,9 @@ app.post('/api/register', async (req, res) => {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
-    // Create user and bot
+    // Create user and bot with custom traits
     const user = await db.createUser(email, name || 'Anonymous');
-    const bot = simulationManager.createUserBot(user.id);
+    const bot = simulationManager.createUserBot(user.id, oceanTraits);
     
     // Store bot in database
     await db.createBot(bot.id, user.id, bot.genes);
