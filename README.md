@@ -116,25 +116,6 @@ Bots cycle through different behavioral states:
 - **Mutation Rate**: Adjust genetic variation (0-50%)
 - **Click Bots**: Inspect individual creature stats and genetics
 
-## Features
-
-### Visual Effects
-- **Hue-based Coloring**: Each bot's appearance reflects its genetics
-- **State Indicators**: Color-coded behavioral states
-- **Selection Highlighting**: Click bots to see detailed information
-- **Aquatic Atmosphere**: Animated bubbles and lighting effects
-
-### Analytics
-- **Population Stats**: Track total bots, adults, children, and food
-- **State Distribution**: See what behaviors are currently active
-- **Genetic Averages**: Monitor trait evolution over time
-- **Individual Inspection**: Detailed stats for selected creatures
-
-### Performance
-- **Spatial Hashing**: Efficient collision detection for large populations
-- **Adaptive Population**: Dynamic birth rate based on current population
-- **Optimized Rendering**: Smooth 60fps with hundreds of creatures
-
 ## Emergent Behaviors
 
 The combination of traits creates realistic, complex behaviors:
@@ -152,21 +133,3 @@ The combination of traits creates realistic, complex behaviors:
 - **Architecture**: Modular OOP design for easy extension
 - **Performance**: Spatial partitioning for O(1) neighbor queries
 - **Compatibility**: Modern browsers with ES6 module support
-
-## Extending the Simulation
-
-The modular architecture makes it easy to add:
-- New behavioral states and transitions
-- Additional genetic traits or physical characteristics  
-- Environmental factors (temperature, currents, obstacles)
-- Predator-prey relationships
-- Different species with unique behaviors
-- Data export and analysis tools
-
-## Credits
-
-Based on artificial life and evolutionary computation principles, implementing:
-- Genetic algorithms for trait inheritance
-- Finite state machines for behavior modeling
-- Spatial partitioning for performance optimization
-- Big Five personality psychology for realistic behavioral modeling
